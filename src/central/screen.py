@@ -1,11 +1,28 @@
 import curses
 from curses.textpad import rectangle
-from typing import Tuple
+from typing import List, Tuple
 
-from central.client_state import ClientStates
+from central.client_state import ClientState, ClientStates, Device
 from utils.singleton import SingletonMeta
 
 MAX_COLUMN_WIDTH = 45
+
+
+class Box:
+    def __init__(self, win: 'curses._CursesWindow', size: Tuple[int, int], pos: Tuple[int, int], title: str = '') -> None:
+        self.win = win
+        self.h, self.w = size
+        self.y, self.x = pos
+        self.title = title and title.center(len(title) + 4)
+
+    def render(self):
+        rectangle(self.win, self.y, self.x, self.y + self.h, self.x + self.w)
+        if self.title:
+            self.win.addstr(self.y, self.x +
+                            centered_x(self.title, self.w), self.title)
+
+    def write(self, y: int, x: int, s: str) -> None:
+        self.win.addstr(self.y + y, self.x + x, s)
 
 
 class Screen(metaclass=SingletonMeta):
@@ -15,6 +32,51 @@ class Screen(metaclass=SingletonMeta):
             self.events()
             self.update()
             self.render()
+
+    def initialize(self, stdscr: 'curses._CursesWindow'):
+        self.clients = ClientStates()
+
+        self.stdscr = stdscr
+        self.cursor_x = self.cursor_y = 0
+
+        self.initialize_boxes()
+
+        curses.init_pair(1, curses.COLOR_CYAN, curses.COLOR_BLACK)
+        curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
+        curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_WHITE)
+
+    def initialize_boxes(self):
+        h, w = self.size
+
+        self.rooms_boxes = [
+            Box(self.stdscr, (1, w // len(self.clients) - 1),
+                (0, 1 + i * w // len(self.clients)), x.name)
+            for i, x in enumerate(self.clients)
+        ]
+
+        self.temperature_box = Box(self.stdscr, (5, w // 4 - 2),
+                                   (3, 1), 'Temperatura')
+        self.humidity_box = Box(self.stdscr, (5, w // 4 - 2),
+                                (3, 1 + w // 4), 'Umidade')
+        self.people_box = Box(self.stdscr, (5, w // 4 - 2),
+                              (3, 1 + 2 * w // 4), 'Número de Pessoas')
+        self.alarm_box = Box(self.stdscr, (5, w // 4 - 2),
+                             (3, 1 + 3 * w // 4), 'Modo Alarme')
+
+        self.inputs_box = Box(self.stdscr, (h - 21, w // 2 - 2),
+                              (20, 1), 'Dispositivos de Entrada')
+        self.outputs_box = Box(self.stdscr, (h - 21, w // 2 - 2),
+                               (20, w // 2 + 1), 'Dispositivos de Saída')
+
+        self.boxes = [
+            *self.rooms_boxes,
+            self.temperature_box,
+            self.humidity_box,
+            self.people_box,
+            self.alarm_box,
+            self.inputs_box,
+            self.outputs_box,
+        ]
 
     def events(self):
         ...
@@ -28,6 +90,9 @@ class Screen(metaclass=SingletonMeta):
         for func_name in filter(lambda x: x.startswith('render_'), dir(self)):
             getattr(self, func_name)()
 
+        for box in self.boxes:
+            box.render()
+
         self.stdscr.refresh()
 
     def render_title(self):
@@ -35,109 +100,30 @@ class Screen(metaclass=SingletonMeta):
         self.stdscr.attron(curses.A_BOLD)
 
         title = 'Servidor Central'
-        _, cx = self.centered_pos(title)
+        cx = centered_x(title, self.size[1])
         self.stdscr.addstr(1, cx, title)
 
         self.stdscr.attroff(curses.color_pair(1))
         self.stdscr.attroff(curses.A_BOLD)
 
     def render_client_state(self):
-        clients = ClientStates()
+        self._render_devices(self.client.inputs, self.inputs_box)
+        self._render_devices(self.client.outputs, self.outputs_box)
 
-        start_y = 10
-        start_x = 3
-        self.stdscr.addstr(start_y, start_x, 'Entradas')
-        for i, x in enumerate(clients[self.cursor_x].inputs, 1):
-            self.stdscr.addstr(i + start_y, start_x, x.name.ljust(MAX_COLUMN_WIDTH, '.') + str(x.value))
-
-    def initialize(self, stdscr: 'curses._CursesWindow'):
-        self.cursor_x = self.cursor_y = 0
-        self.stdscr = stdscr
-
-        curses.init_pair(1, curses.COLOR_CYAN, curses.COLOR_BLACK)
-        curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
-        curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_WHITE)
+    @staticmethod
+    def _render_devices(devices: List[Device], box: Box):
+        for i, x in enumerate(devices, 2):
+            v = '???' if x.value is None else ['OFF', 'ON '][x.value]
+            box.write(i, 2, x.name.ljust(box.w - len(v) - 3, '.') + v)
 
     @property
     def size(self) -> Tuple[int, int]:
         return self.stdscr.getmaxyx()
 
-    def centered_pos(self, s: str) -> Tuple[int, int]:
-        h, w = self.size
-        return (h // 2), (w // 2) - (len(s) // 2) - (len(s) & 1)
+    @property
+    def client(self) -> ClientState:
+        return self.clients[self.cursor_x]
 
 
-'''
-
-            # Initialization
-            stdscr.erase()
-            height, width = stdscr.getmaxyx()
-
-            if k == curses.KEY_DOWN:
-                self.cursor_y = self.cursor_y + 1
-            elif k == curses.KEY_UP:
-                self.cursor_y = self.cursor_y - 1
-            elif k == curses.KEY_RIGHT:
-                self.cursor_x = self.cursor_x + 1
-            elif k == curses.KEY_LEFT:
-                self.cursor_x = self.cursor_x - 1
-
-            self.cursor_x = max(0, self.cursor_x)
-            self.cursor_x = min(width-1, self.cursor_x)
-
-            self.cursor_y = max(0, self.cursor_y)
-            self.cursor_y = min(height-1, self.cursor_y)
-
-            # Declaration of strings
-            title = "Curses example"[:width-1]
-            subtitle = "Written by Clay McLeod"[:width-1]
-            keystr = "Last key pressed: {}".format(k)[:width-1]
-            statusbarstr = "Press 'q' to exit | STATUS BAR | Pos: {}, {}".format(
-                self.cursor_x, self.cursor_y)
-            if k == 0:
-                keystr = "No key press detected..."[:width-1]
-
-            # Centering calculations
-            start_x_title = int(
-                (width // 2) - (len(title) // 2) - len(title) % 2)
-            start_x_subtitle = int(
-                (width // 2) - (len(subtitle) // 2) - len(subtitle) % 2)
-            start_x_keystr = int(
-                (width // 2) - (len(keystr) // 2) - len(keystr) % 2)
-            start_y = int((height // 2) - 2)
-
-            # Rendering some text
-            whstr = "Width: {}, Height: {}".format(width, height)
-            stdscr.addstr(0, 0, whstr, curses.color_pair(1))
-
-            # Render status bar
-            stdscr.attron(curses.color_pair(3))
-            stdscr.addstr(height-1, 0, statusbarstr)
-            stdscr.addstr(height-1, len(statusbarstr), " " *
-                          (width - len(statusbarstr) - 1))
-            stdscr.attroff(curses.color_pair(3))
-
-            # Turning on attributes for title
-            stdscr.attron(curses.color_pair(2))
-            stdscr.attron(curses.A_BOLD)
-
-            # Rendering title
-            stdscr.addstr(start_y, start_x_title, title)
-
-            # Turning off attributes for title
-            stdscr.attroff(curses.color_pair(2))
-            stdscr.attroff(curses.A_BOLD)
-
-            # Print rest of text
-            stdscr.addstr(start_y + 1, start_x_subtitle, subtitle)
-            stdscr.addstr(start_y + 3, (width // 2) - 2, '-' * 4)
-            stdscr.addstr(start_y + 5, start_x_keystr, keystr)
-            stdscr.move(self.cursor_y, self.cursor_x)
-
-            # Refresh the screen
-            stdscr.refresh()
-
-            # Wait for next input
-            k = stdscr.getch()
-
-'''
+def centered_x(s: str, w: int) -> int:
+    return w // 2 - len(s) // 2

@@ -1,7 +1,34 @@
-[
-    {
-        "name": "Sala 01",
-        "ip": "127.0.0.1",
-        "port": 10922
-    }
-]
+{
+    "rooms": [
+        {
+            "name": "Sala 01",
+            "ip": "127.0.0.1",
+            "port": 10922
+        },
+        {
+            "name": "Sala 02",
+            "ip": "127.0.0.1",
+            "port": 10923
+        },
+        {
+            "name": "Sala 03",
+            "ip": "127.0.0.1",
+            "port": 10923
+        }
+    ],
+    "inputs": [
+        "Sensor de Presença",
+        "Sensor de Fumaça",
+        "Sensor de Janela",
+        "Sensor de Porta",
+        "Sensor de Contagem de Pessoas Entrada",
+        "Sensor de Contagem de Pessoas Saída"
+    ],
+    "outputs": [
+        "Lâmpada 01",
+        "Lâmpada 02",
+        "Projetor Multimídia",
+        "Ar-Condicionado (1º Andar)",
+        "Sirene do Alarme"
+    ]
+}

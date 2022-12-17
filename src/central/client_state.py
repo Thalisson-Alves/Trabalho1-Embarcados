@@ -2,7 +2,7 @@
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Union, overload
+from typing import List, Optional, overload
 
 from utils.singleton import SingletonMeta
 
@@ -18,7 +18,7 @@ class ConnectionInfo:
 @dataclass
 class Device:
     name: str
-    value: Union[int, float]
+    value: Optional[bool]
 
 
 @dataclass
@@ -27,7 +27,8 @@ class ClientState:
     conn_info: ConnectionInfo
     inputs: List[Device] = field(default_factory=list)
     outputs: List[Device] = field(default_factory=list)
-    sensors: List[Device] = field(default_factory=list)
+    temperature: Optional[float] = None
+    humidity: Optional[float] = None
 
 
 class ClientStates(metaclass=SingletonMeta):
@@ -36,9 +37,19 @@ class ClientStates(metaclass=SingletonMeta):
             config = json.load(f)
 
         self.clients = [
-            ClientState(name=client.pop('name'),
-                        conn_info=ConnectionInfo(**client))
-            for client in config
+            ClientState(
+                name=client.pop('name'),
+                conn_info=ConnectionInfo(**client),
+                inputs=[
+                    Device(device_name, None)
+                    for device_name in config['inputs']
+                ],
+                outputs=[
+                    Device(device_name, None)
+                    for device_name in config['outputs']
+                ],
+            )
+            for client in config['rooms']
         ]
         self._client_ips = {
             client.conn_info.ip: idx
@@ -46,10 +57,10 @@ class ClientStates(metaclass=SingletonMeta):
         }
 
     @overload
-    def __getitem__(self, idx: str) -> ClientState:...
+    def __getitem__(self, idx: str) -> ClientState: ...
 
     @overload
-    def __getitem__(self, idx: int) -> ClientState:...
+    def __getitem__(self, idx: int) -> ClientState: ...
 
     def __getitem__(self, idx):
         if isinstance(idx, int):
@@ -59,3 +70,6 @@ class ClientStates(metaclass=SingletonMeta):
 
     def __len__(self) -> int:
         return len(self.clients)
+
+    def __iter__(self):
+        return iter(self.clients)
