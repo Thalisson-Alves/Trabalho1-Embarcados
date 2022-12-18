@@ -6,4 +6,4 @@ class CentralRequestType(IntEnum):
 
 
 class ClientRequestType(IntEnum):
-    ...
+    SET_DEVICE = 0

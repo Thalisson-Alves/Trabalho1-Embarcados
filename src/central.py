@@ -13,15 +13,14 @@ PORT = int(os.getenv('PORT', '10921'))
 def main():
     # TODO: Change all prints to log
     threads = [
-        threading.Thread(target=server.run, args=(HOST, PORT, handle_requests)),
-        threading.Thread(target=curses.wrapper, args=(Screen().run, )),
+        threading.Thread(target=server.run, args=(
+            HOST, PORT, handle_requests), daemon=True),
+        threading.Thread(target=curses.wrapper, args=(
+            Screen().run, ), daemon=True),
     ]
 
     for t in threads:
         t.start()
-
-    for t in threads:
-        t.join()
 
 
 if __name__ == '__main__':

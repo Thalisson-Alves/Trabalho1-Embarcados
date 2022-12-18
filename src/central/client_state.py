@@ -27,8 +27,10 @@ class ClientState:
     conn_info: ConnectionInfo
     inputs: List[Device] = field(default_factory=list)
     outputs: List[Device] = field(default_factory=list)
+    people: Optional[int] = None
     temperature: Optional[float] = None
     humidity: Optional[float] = None
+    alarm_mode: Optional[bool] = None
 
 
 class ClientStates(metaclass=SingletonMeta):
@@ -40,14 +42,14 @@ class ClientStates(metaclass=SingletonMeta):
             ClientState(
                 name=client.pop('name'),
                 conn_info=ConnectionInfo(**client),
-                inputs=[
+                inputs=sorted([
                     Device(device_name, None)
                     for device_name in config['inputs']
-                ],
-                outputs=[
+                ], key=lambda x: x.name),
+                outputs=sorted([
                     Device(device_name, None)
                     for device_name in config['outputs']
-                ],
+                ], key=lambda x: x.name),
             )
             for client in config['rooms']
         ]

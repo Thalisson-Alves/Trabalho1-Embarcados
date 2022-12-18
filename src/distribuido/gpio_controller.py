@@ -27,16 +27,7 @@ class GPIOController(metaclass=SingletonMeta):
             gpio.setmode(gpio.BCM)
             gpio.setup(x.pin, gpio.OUT)
 
-        self.sensors = {
-            device.name: adafruit_dht.DHT22(getattr(board, f'D{device.pin}'))
-            for device in config.sensors
-        }
-
-    def read_all_sensors(self) -> Dict[str, Optional[float]]:
-        return {
-            name: self.read_sensor(name)
-            for name in self.sensors
-        }
+        self.sensor = adafruit_dht.DHT22(getattr(board, f'D{config.sensors[0].pin}'))
 
     def read_all_inputs(self) -> Dict[str, bool]:
         return {
@@ -50,9 +41,15 @@ class GPIOController(metaclass=SingletonMeta):
             for name in self.outputs
         }
 
-    def read_sensor(self, name: str) -> Optional[float]:
+    def read_temperature(self) -> Optional[float]:
         try:
-            return self.sensors[name].temperature
+            return self.sensor.temperature
+        except RuntimeError:
+            return None
+
+    def read_humidity(self) -> Optional[float]:
+        try:
+            return self.sensor.humidity
         except RuntimeError:
             return None
 
@@ -63,7 +60,7 @@ class GPIOController(metaclass=SingletonMeta):
         return self.read_device('outputs', name)
 
     def read_device(self, device_type: str, name: str) -> bool:
-        return gpio.input(getattr(self, device_type)[name].pin)
+        return bool(gpio.input(getattr(self, device_type)[name].pin))
 
     def set_device(self, name: str, value: bool):
         gpio.output(self.outputs[name], value)
