@@ -18,7 +18,8 @@ def handle_requests(data: dict, addr: Tuple[str, int]) -> dict:
             for name, value in data['outputs'].items()
         ], key=lambda x: x.name)
         for field in ('people', 'temperature', 'humidity', 'alarm_mode'):
-            setattr(client, field, data[field])
+            if data[field] is not None:
+                setattr(client, field, data[field])
         return {'success': True, 'detail': 'Data updated'}
     else:
         return {'success': False, 'detail': 'Unknown request'}
@@ -29,4 +30,4 @@ def toggle_device(client: ClientState, device: Device) -> bool:
                         {'type': ClientRequestType.SET_DEVICE,
                         'name': device.name,
                         'value': not device.value})
-    return response['success']
+    return response

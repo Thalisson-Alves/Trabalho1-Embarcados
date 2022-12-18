@@ -63,4 +63,5 @@ class GPIOController(metaclass=SingletonMeta):
         return bool(gpio.input(getattr(self, device_type)[name].pin))
 
     def set_device(self, name: str, value: bool):
-        gpio.output(self.outputs[name], value)
+        print(f'Setting {name} to {int(value)}')
+        gpio.output(self.outputs[name].pin, int(value))

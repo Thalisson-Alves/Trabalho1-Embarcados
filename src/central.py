@@ -15,12 +15,15 @@ def main():
     threads = [
         threading.Thread(target=server.run, args=(
             HOST, PORT, handle_requests), daemon=True),
-        threading.Thread(target=curses.wrapper, args=(
-            Screen().run, ), daemon=True),
     ]
 
     for t in threads:
         t.start()
+
+    try:
+        curses.wrapper(Screen().run)
+    except Exception as e:
+        print(e)
 
 
 if __name__ == '__main__':

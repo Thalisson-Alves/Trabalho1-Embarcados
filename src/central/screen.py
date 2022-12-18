@@ -39,8 +39,10 @@ class Screen(metaclass=SingletonMeta):
     def run(self, stdscr: 'curses._CursesWindow'):
         self.initialize(stdscr)
         while True:
-            self.render()
             self.update()
+            self.render()
+
+            curses.napms(10)
 
     def initialize(self, stdscr: 'curses._CursesWindow'):
         self.clients = ClientStates()
@@ -49,6 +51,7 @@ class Screen(metaclass=SingletonMeta):
         self.stdscr.keypad(True)
         self.stdscr.nodelay(True)
         self.room_selected = self.option_selected = 0
+        self.message = ''
 
         self.initialize_boxes()
 
@@ -125,7 +128,7 @@ class Screen(metaclass=SingletonMeta):
         elif self.option_selected == 2:...
         elif self.option_selected == 3:...
         else:
-            requests.toggle_device(self.client, self.client.outputs[self.option_selected - len(self.options)])
+            self.message = str(requests.toggle_device(self.client, self.client.outputs[self.option_selected - len(self.options)]))
 
     def render(self):
         self.stdscr.erase()
@@ -160,6 +163,9 @@ class Screen(metaclass=SingletonMeta):
         self.people_box.write(2, 2, format_value(
             self.client.people), center=True)
         self.alarm_box.write(2, 2, format_value(self.client.alarm_mode), center=True)
+
+    def render_message(self):
+        self.trigger_alarm_box.write(2, 2, self.message, center=True)
 
     def render_menu(self):
         for i, option in enumerate(self.options, 1):

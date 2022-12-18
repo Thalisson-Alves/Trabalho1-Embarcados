@@ -9,6 +9,7 @@ from utils.try_log import try_log
 
 
 def handle_requests(data: dict, addr: Tuple[str, int]) -> dict:
+    print(f'Received {data}')
     controller = GPIOController()
 
     if data['type'] == ClientRequestType.SET_DEVICE:
@@ -18,8 +19,10 @@ def handle_requests(data: dict, addr: Tuple[str, int]) -> dict:
             'name': data['name'],
             'value': controller.read_output(data['name'])
         }
+        print(f'Send response [{response}]')
         return response
     else:
+        print(f"Unknown request: [{data}]")
         return {'success': False, 'detail': 'Unknown request'}
 
 
