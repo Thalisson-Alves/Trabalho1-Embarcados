@@ -22,7 +22,7 @@ def main():
 
     try:
         curses.wrapper(Screen().run)
-    except Exception as e:
+    except:
         import traceback
         traceback.print_exc()
 

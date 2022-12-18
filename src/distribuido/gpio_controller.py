@@ -34,11 +34,8 @@ class GPIOController(metaclass=SingletonMeta):
         def inc_people(_): self.people += 1
         def dec_people(_): self.people -= 1
 
-        for device in config.inputs:
-            if device.name == 'Sensor de Contagem de Pessoas Entrada':
-                gpio.add_event_detect(device.pin, gpio.RISING, inc_people)
-            if device.name == 'Sensor de Contagem de Pessoas Saída':
-                gpio.add_event_detect(device.pin, gpio.RISING, dec_people)
+        gpio.add_event_detect(self.inputs['Sensor de Contagem de Pessoas Entrada'].pin, gpio.RISING, inc_people, bouncetime=50)
+        gpio.add_event_detect(self.inputs['Sensor de Contagem de Pessoas Saída'].pin, gpio.RISING, dec_people, bouncetime=50)
 
     def read_all_inputs(self) -> Dict[str, bool]:
         return {

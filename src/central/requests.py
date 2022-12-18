@@ -23,11 +23,3 @@ def handle_requests(data: dict, addr: Tuple[str, int]) -> dict:
         return {'success': True, 'detail': 'Data updated'}
     else:
         return {'success': False, 'detail': 'Unknown request'}
-
-
-def toggle_device(client: ClientState, device: Device) -> bool:
-    response = request(client.conn_info.ip, client.conn_info.port,
-                        {'type': ClientRequestType.SET_DEVICE,
-                        'name': device.name,
-                        'value': not device.value})
-    return response

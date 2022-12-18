@@ -7,3 +7,4 @@ class CentralRequestType(IntEnum):
 
 class ClientRequestType(IntEnum):
     SET_DEVICE = 0
+    SET_ALARM_MODE = 1

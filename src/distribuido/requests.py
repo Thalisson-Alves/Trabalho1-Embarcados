@@ -21,6 +21,14 @@ def handle_requests(data: dict, addr: Tuple[str, int]) -> dict:
         }
         print(f'Send response [{response}]')
         return response
+    elif data['type'] == ClientRequestType.SET_ALARM_MODE:
+        controller.alarm_mode = data['value']
+        response = {
+            'success': True,
+            'value': controller.alarm_mode
+        }
+        print(f'Send response [{response}]')
+        return response
     else:
         print(f"Unknown request: [{data}]")
         return {'success': False, 'detail': 'Unknown request'}

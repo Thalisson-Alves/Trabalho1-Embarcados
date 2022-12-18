@@ -32,6 +32,12 @@ class ClientState:
     humidity: Optional[float] = None
     alarm_mode: Optional[bool] = None
 
+    def find_output_by_name(self, name: str) -> Device:
+        for device in self.outputs:
+            if device.name == name:
+                return device
+        raise RuntimeError('Output not found')
+
 
 class ClientStates(metaclass=SingletonMeta):
     def __init__(self) -> None:

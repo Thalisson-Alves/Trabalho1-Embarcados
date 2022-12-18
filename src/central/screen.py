@@ -2,8 +2,9 @@ import curses
 from curses.textpad import rectangle
 from typing import List, Tuple
 
-from central import requests
-from central.client_state import ClientState, ClientStates, Device
+from central.client_state import ClientState, ClientStates
+from utils.interface import ClientRequestType
+from utils.server import request
 from utils.singleton import SingletonMeta
 
 
@@ -51,7 +52,7 @@ class Screen(metaclass=SingletonMeta):
         self.stdscr.keypad(True)
         self.stdscr.nodelay(True)
         self.room_selected = self.option_selected = 0
-        self.message = ''
+        self.last_errors: List[str] = []
 
         self.initialize_boxes()
 
@@ -62,14 +63,16 @@ class Screen(metaclass=SingletonMeta):
     def initialize_boxes(self):
         h, w = self.size
 
-        self.temperature_box = Box(self.stdscr, (4, w // 4 - 2),
+        self.temperature_box = Box(self.stdscr, (4, w // 5 - 2),
                                    (3, 1), 'Temperatura')
-        self.humidity_box = Box(self.stdscr, (4, w // 4 - 2),
-                                (3, 1 + w // 4), 'Umidade')
-        self.people_box = Box(self.stdscr, (4, w // 4 - 2),
-                              (3, 1 + 2 * w // 4), 'Número de Pessoas')
-        self.alarm_box = Box(self.stdscr, (4, w // 4 - 2),
-                             (3, 1 + 3 * w // 4), 'Modo Alarme')
+        self.humidity_box = Box(self.stdscr, (4, w // 5 - 2),
+                                (3, 1 + w // 5), 'Umidade')
+        self.people_box = Box(self.stdscr, (4, w // 5 - 2),
+                              (3, 1 + 2 * w // 5), 'Número de Pessoas')
+        self.total_people_box = Box(self.stdscr, (4, w // 5 - 2),
+                              (3, 1 + 3 * w // 5), 'Número de Pessoas Total')
+        self.alarm_box = Box(self.stdscr, (4, w // 5 - 2),
+                             (3, 1 + 4 * w // 5), 'Modo Alarme')
 
         self.menu_box = Box(self.stdscr, (7, w // 2 - 2), (8, 1), 'Menu')
 
@@ -91,6 +94,7 @@ class Screen(metaclass=SingletonMeta):
             self.temperature_box,
             self.humidity_box,
             self.people_box,
+            self.total_people_box,
             self.alarm_box,
             self.menu_box,
             self.trigger_alarm_box,
@@ -124,11 +128,41 @@ class Screen(metaclass=SingletonMeta):
     def apply_action(self):
         if self.option_selected == 0:
             self.option_selected = len(self.options)
-        elif self.option_selected == 1:...
-        elif self.option_selected == 2:...
+        elif self.option_selected == 1:
+            for client in self.clients:
+                response = request(client.conn_info.ip, client.conn_info.port,
+                                {'type': ClientRequestType.SET_ALARM_MODE,
+                                'value': not client.alarm_mode})
+                if response['success']:
+                    client.alarm_mode = response['value']
+                else:
+                    # self.last_errors.append(f'Erro ao acionar Sistema de Alarme da {client.name}')
+                    self.last_errors.append(str(response))
+        elif self.option_selected == 2:
+            buzzer_name = 'Sirene do Alarme'
+            for client in self.clients:
+                device = client.find_output_by_name(buzzer_name)
+                response = request(client.conn_info.ip, client.conn_info.port,
+                                {'type': ClientRequestType.SET_DEVICE,
+                                'name': device.name,
+                                'value': not device.value})
+                if response['success']:
+                    device.value = response['value']
+                else:
+                    # self.last_errors.append(f'Erro ao acionar Sistema de Alarme da {client.name}')
+                    self.last_errors.append(str(response))
         elif self.option_selected == 3:...
         else:
-            self.message = str(requests.toggle_device(self.client, self.client.outputs[self.option_selected - len(self.options)]))
+            device = self.client.outputs[self.option_selected - len(self.options)]
+            response = request(self.client.conn_info.ip, self.client.conn_info.port,
+                        {'type': ClientRequestType.SET_DEVICE,
+                        'name': device.name,
+                        'value': not device.value})
+            if response['success']:
+                device.value = response['value']
+            else:
+                # self.last_errors.append(f'Erro ao acionar {device.name} da {self.client.name}')
+                self.last_errors.append(str(response))
 
     def render(self):
         self.stdscr.erase()
@@ -162,10 +196,15 @@ class Screen(metaclass=SingletonMeta):
             self.client.humidity), center=True)
         self.people_box.write(2, 2, format_value(
             self.client.people), center=True)
+        self.total_people_box.write(2, 2, format_value(sum(x.people or 0 for x in self.clients)), center=True)
         self.alarm_box.write(2, 2, format_value(self.client.alarm_mode), center=True)
 
-    def render_message(self):
-        self.trigger_alarm_box.write(2, 2, self.message, center=True)
+    def render_error_messages(self):
+        self.last_errors[:] = self.last_errors[-4:]
+        self.stdscr.attron(curses.color_pair(2))
+        for i, msg in enumerate(self.last_errors, 2):
+            self.trigger_alarm_box.write(i, 2, msg, center=True)
+        self.stdscr.attroff(curses.color_pair(2))
 
     def render_menu(self):
         for i, option in enumerate(self.options, 1):
