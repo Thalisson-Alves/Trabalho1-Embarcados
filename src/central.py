@@ -23,7 +23,8 @@ def main():
     try:
         curses.wrapper(Screen().run)
     except Exception as e:
-        print(e)
+        import traceback
+        traceback.print_exc()
 
 
 if __name__ == '__main__':

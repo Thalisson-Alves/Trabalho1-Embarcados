@@ -27,7 +27,18 @@ class GPIOController(metaclass=SingletonMeta):
             gpio.setmode(gpio.BCM)
             gpio.setup(x.pin, gpio.OUT)
 
-        self.sensor = adafruit_dht.DHT22(getattr(board, f'D{config.sensors[0].pin}'))
+        self.sensor = adafruit_dht.DHT22(getattr(board, f'D{config.sensors[0].pin}'), use_pulseio=False)
+        self.people = 0
+        self.alarm_mode = False
+
+        def inc_people(_): self.people += 1
+        def dec_people(_): self.people -= 1
+
+        for device in config.inputs:
+            if device.name == 'Sensor de Contagem de Pessoas Entrada':
+                gpio.add_event_detect(device.pin, gpio.RISING, inc_people)
+            if device.name == 'Sensor de Contagem de Pessoas Saída':
+                gpio.add_event_detect(device.pin, gpio.RISING, dec_people)
 
     def read_all_inputs(self) -> Dict[str, bool]:
         return {
@@ -44,13 +55,13 @@ class GPIOController(metaclass=SingletonMeta):
     def read_temperature(self) -> Optional[float]:
         try:
             return self.sensor.temperature
-        except RuntimeError:
+        except (RuntimeError, OverflowError):
             return None
 
     def read_humidity(self) -> Optional[float]:
         try:
             return self.sensor.humidity
-        except RuntimeError:
+        except (RuntimeError, OverflowError):
             return None
 
     def read_input(self, name: str) -> bool:

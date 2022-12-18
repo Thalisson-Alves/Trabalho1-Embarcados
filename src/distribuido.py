@@ -18,7 +18,8 @@ def main():
     try:
         server.run(config.my_con.ip, config.my_con.port, handle_requests)
     except Exception as e:
-        print(e)
+        import traceback
+        traceback.print_exc()
 
 
 if __name__ == '__main__':

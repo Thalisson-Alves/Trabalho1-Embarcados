@@ -36,10 +36,10 @@ def update_client_states():
             'type': CentralRequestType.UPDATE_STATE,
             'inputs': controller.read_all_inputs(),
             'outputs': controller.read_all_outputs(),
-            'people': 42,
+            'people': controller.people,
             'temperature': controller.read_temperature(),
             'humidity': controller.read_humidity(),
-            'alarm_mode': False,
+            'alarm_mode': controller.alarm_mode,
         }
         print('Enviando status pro Central')
         response = request(config.central_con.ip,
