@@ -1,5 +1,7 @@
 import socket
 import json
+import time
+import logging
 from typing import NoReturn, Callable, Tuple
 
 BUFFER_SIZE = 1024
@@ -11,6 +13,7 @@ def default_handler(data: dict, addr: Tuple[str, int]) -> dict:
 
 def run(host: str, port: int, handle_request: Callable[[dict, Tuple[str, int]], dict] = default_handler) -> NoReturn:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind((host, port))
         sock.listen()
 

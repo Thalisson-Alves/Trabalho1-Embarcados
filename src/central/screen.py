@@ -167,8 +167,7 @@ class Screen(metaclass=SingletonMeta):
                     logging.error('Erro ao tentar configurar %s da %s para %s', device.name, client.name, format_value(not device.value))
                     self.log.error('%s %s %s', client.name, device.name, format_value(not device.value))
         elif self.option_selected == 3:
-            self.log.info('Saindo do sistema')
-            time.sleep(1)
+            logging.info('Saindo do sistema')
             exit(0)
         else:
             device = self.client.outputs[self.option_selected - len(self.options)]
@@ -220,7 +219,7 @@ class Screen(metaclass=SingletonMeta):
         self.alarm_box.write(2, 2, format_value(self.client.alarm_mode), center=True)
 
     def render_last_events(self):
-        events = self.last_events.getvalue().splitlines()[-4:]
+        events = self.last_events.getvalue().splitlines()[-1:-5:-1]
         for i, msg in enumerate(events, 2):
             if not msg: continue
             t, s = msg.split('|', 1)
@@ -231,7 +230,7 @@ class Screen(metaclass=SingletonMeta):
 
         self.last_events.seek(0)
         self.last_events.truncate(0)
-        self.last_events.write('\n'.join(events) + '\n')
+        self.last_events.write('\n'.join(events[::-1]) + '\n')
 
     def render_menu(self):
         for i, option in enumerate(self.options, 1):
