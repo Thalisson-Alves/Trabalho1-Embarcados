@@ -11,7 +11,6 @@ class GPIOItem:
     pin: int
 
 
-# TODO: Refactor this class
 @dataclass
 class ConnectionInfo:
     ip: str
