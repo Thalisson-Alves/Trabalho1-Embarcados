@@ -55,3 +55,26 @@ def update_client_states():
         print(f'Response: {response}')
 
         sleep(1)
+
+
+@try_log
+def trigger_buzzer():
+    config = Config()
+    controller = GPIOController()
+
+    while True:
+        sleep(.1)
+        if not controller.should_sound_buzzer():
+            continue
+
+        data = {
+            'type': CentralRequestType.PROPAGATE,
+            'propagation_data': {
+                'type': ClientRequestType.SET_DEVICE,
+                'name': 'Sirene do Alarme',
+                'value': True,
+            }
+        }
+        response = request(config.central_con.ip,
+                           config.central_con.port, data)
+        print(f'Propagate Response: {response}')

@@ -3,6 +3,7 @@ from enum import IntEnum
 
 class CentralRequestType(IntEnum):
     UPDATE_STATE = 0
+    PROPAGATE = 1
 
 
 class ClientRequestType(IntEnum):
