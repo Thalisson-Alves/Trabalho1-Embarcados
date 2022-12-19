@@ -1,4 +1,5 @@
 from typing import Tuple
+import logging
 
 from central.client_state import ClientStates, Device
 from utils.interface import CentralRequestType
@@ -20,6 +21,8 @@ def handle_requests(data: dict, addr: Tuple[str, int]) -> dict:
         for field in ('people', 'temperature', 'humidity', 'alarm_mode'):
             if data[field] is not None:
                 setattr(client, field, data[field])
+        logging.getLogger('screen').info('Atualização %s', client.name)
+        logging.info('Atualização automátca da %s', client.name)
         return {'success': True, 'detail': 'Data updated'}
 
     if data['type'] == CentralRequestType.PROPAGATE:
@@ -28,6 +31,8 @@ def handle_requests(data: dict, addr: Tuple[str, int]) -> dict:
             response = request(client.conn_info.ip, client.conn_info.port,
                                data['propagation_data'])
             if not response['success']: fails += 1
+
+        logging.info('Propagação automática requisitada pela %s com %s falhas para %s', client_states[addr[0]], fails, str(data['propagation_data']))
         return {'success': fails < len(client_states), 'detail': f'Propagated with {fails} fails'}
-    
+
     return {'success': False, 'detail': 'Unknown request'}
