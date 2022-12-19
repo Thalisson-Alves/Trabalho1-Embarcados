@@ -14,10 +14,6 @@ LOG_FILE = os.getenv('LOG_FILE', '/tmp/central-log.csv')
 
 def main():
     logging.basicConfig(filename=LOG_FILE, encoding='utf-8', level=logging.INFO, format='%(asctime)s,%(message)s', datefmt='%d/%m/%Y %I:%M:%S')
-    screen = Screen()
-    handler = logging.StreamHandler(screen.last_events)
-    handler.setLevel(logging.INFO)
-    logging.getLogger().addHandler(handler)
 
     threads = [
         threading.Thread(target=server.run, args=(
@@ -28,7 +24,9 @@ def main():
         t.start()
 
     try:
-        curses.wrapper(screen.run)
+        curses.wrapper(Screen().run)
+    except (SystemExit, KeyboardInterrupt):
+        ...
     except:
         import traceback
         traceback.print_exc()

@@ -21,6 +21,7 @@ def handle_requests(data: dict, addr: Tuple[str, int]) -> dict:
             if data[field] is not None:
                 setattr(client, field, data[field])
         return {'success': True, 'detail': 'Data updated'}
+
     if data['type'] == CentralRequestType.PROPAGATE:
         fails = 0
         for client in client_states:
@@ -28,5 +29,5 @@ def handle_requests(data: dict, addr: Tuple[str, int]) -> dict:
                                data['propagation_data'])
             if not response['success']: fails += 1
         return {'success': fails < len(client_states), 'detail': f'Propagated with {fails} fails'}
-    else:
-        return {'success': False, 'detail': 'Unknown request'}
+    
+    return {'success': False, 'detail': 'Unknown request'}

@@ -1,5 +1,6 @@
 import curses
 from curses.textpad import rectangle
+import time
 from typing import List, Tuple
 import logging
 import io
@@ -41,6 +42,13 @@ class Box:
 class Screen(metaclass=SingletonMeta):
     def __init__(self) -> None:
         self.last_events = io.StringIO()
+        ch = logging.StreamHandler(self.last_events)
+        ch.setLevel(logging.DEBUG)
+        ch.setFormatter(
+            logging.Formatter('%(levelname)s|%(asctime)s %(message)s', datefmt='%d/%m/%Y %I:%M:%S')
+        )
+        self.log = logging.getLogger('screen')
+        self.log.addHandler(ch)
 
     def run(self, stdscr: 'curses._CursesWindow'):
         self.initialize(stdscr)
@@ -139,8 +147,10 @@ class Screen(metaclass=SingletonMeta):
                 if response['success']:
                     client.alarm_mode = response['value']
                     logging.info('Configuração do Sistema de Alarme da %s para %s', client.name, format_value(client.alarm_mode))
+                    self.log.info('%s %s %s', client.name, 'Sistema de Alarme', format_value(client.alarm_mode))
                 else:
                     logging.info('Erro ao tentar configurar o Sistema de Alarme da %s para %s', client.name, format_value(not client.alarm_mode))
+                    self.log.error('%s %s %s', client.name, 'Sistema de Alarme', format_value(not client.alarm_mode))
         elif self.option_selected == 2:
             buzzer_name = 'Sirene do Alarme'
             for client in self.clients:
@@ -152,9 +162,14 @@ class Screen(metaclass=SingletonMeta):
                 if response['success']:
                     device.value = response['value']
                     logging.info('Configuração do %s da %s para %s', device.name, client.name, format_value(device.value))
+                    self.log.info('%s %s %s', client.name, device.name, format_value(device.value))
                 else:
                     logging.error('Erro ao tentar configurar %s da %s para %s', device.name, client.name, format_value(not device.value))
-        elif self.option_selected == 3:...  # TODO: Implement exit
+                    self.log.error('%s %s %s', client.name, device.name, format_value(not device.value))
+        elif self.option_selected == 3:
+            self.log.info('Saindo do sistema')
+            time.sleep(1)
+            exit(0)
         else:
             device = self.client.outputs[self.option_selected - len(self.options)]
             response = request(self.client.conn_info.ip, self.client.conn_info.port,
@@ -164,8 +179,10 @@ class Screen(metaclass=SingletonMeta):
             if response['success']:
                 device.value = response['value']
                 logging.info('Configuração do %s para %s', device.name, format_value(device.value))
+                self.log.info('%s %s %s', self.client.name, device.name, format_value(device.value))
             else:
                 logging.error('Erro ao tentar configurar %s para %s', device.name, format_value(not device.value))
+                self.log.error('%s %s %s', self.client.name, device.name, format_value(not device.value))
 
     def render(self):
         self.stdscr.erase()
@@ -205,9 +222,11 @@ class Screen(metaclass=SingletonMeta):
     def render_last_events(self):
         events = self.last_events.getvalue().splitlines()[-4:]
         for i, msg in enumerate(events, 2):
-            at = curses.color_pair(2) if 'erro' in msg.lower() else curses.color_pair(4)
+            if not msg: continue
+            t, s = msg.split('|', 1)
+            at = curses.color_pair(2) if 'error' == t.lower() else curses.color_pair(4)
             self.stdscr.attron(at)
-            self.trigger_alarm_box.write(i, 2, msg, center=True)
+            self.trigger_alarm_box.write(i, 2, s, center=True)
             self.stdscr.attroff(at)
 
         self.last_events.seek(0)

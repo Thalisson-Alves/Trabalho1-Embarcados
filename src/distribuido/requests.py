@@ -64,6 +64,7 @@ def trigger_buzzer():
 
     while True:
         sleep(.1)
+        # TODO: Maybe turn off after
         if not controller.should_sound_buzzer():
             continue
 

@@ -50,7 +50,7 @@ class GPIOController(metaclass=SingletonMeta):
         while True:
             time.sleep(0.01)
 
-            if not self.read_input('Sensor de Presença'):
+            if self.alarm_mode or not self.read_input('Sensor de Presença'):
                 continue
 
             self.set_device('Lâmpada 01', True)
