@@ -1,7 +1,7 @@
 from typing import Tuple
 
-from central.client_state import ClientState, ClientStates, Device
-from utils.interface import CentralRequestType, ClientRequestType
+from central.client_state import ClientStates, Device
+from utils.interface import CentralRequestType
 from utils.server import request
 
 

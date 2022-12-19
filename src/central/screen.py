@@ -1,6 +1,8 @@
 import curses
 from curses.textpad import rectangle
 from typing import List, Tuple
+import logging
+import io
 
 from central.client_state import ClientState, ClientStates
 from utils.interface import ClientRequestType
@@ -37,6 +39,9 @@ class Box:
 
 
 class Screen(metaclass=SingletonMeta):
+    def __init__(self) -> None:
+        self.last_events = io.StringIO()
+
     def run(self, stdscr: 'curses._CursesWindow'):
         self.initialize(stdscr)
         while True:
@@ -52,13 +57,13 @@ class Screen(metaclass=SingletonMeta):
         self.stdscr.keypad(True)
         self.stdscr.nodelay(True)
         self.room_selected = self.option_selected = 0
-        self.last_errors: List[str] = []
 
         self.initialize_boxes()
 
         curses.init_pair(1, curses.COLOR_CYAN, curses.COLOR_BLACK)
         curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
         curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_WHITE)
+        curses.init_pair(4, curses.COLOR_GREEN, curses.COLOR_BLACK)
 
     def initialize_boxes(self):
         h, w = self.size
@@ -83,7 +88,7 @@ class Screen(metaclass=SingletonMeta):
             'Sair',
         ]
 
-        self.trigger_alarm_box = Box(self.stdscr, (7, w // 2 - 2), (8, 1 + w // 2), 'Alarmes disparados')
+        self.trigger_alarm_box = Box(self.stdscr, (7, w // 2 - 2), (8, 1 + w // 2), 'Últimos eventos')
 
         self.inputs_box = Box(self.stdscr, (h - 21, w // 2 - 2),
                               (16, 1), 'Dispositivos de Entrada')
@@ -122,8 +127,6 @@ class Screen(metaclass=SingletonMeta):
             self.room_selected = (self.room_selected + 1) % len(self.clients)
         elif user_input == curses.KEY_BTAB:
             self.room_selected = (self.room_selected - 1) % len(self.clients)
-        else:
-            ... #self.trigger_alarm_box.write(4, 4, f'Typed: [{user_input}]')
 
     def apply_action(self):
         if self.option_selected == 0:
@@ -135,9 +138,9 @@ class Screen(metaclass=SingletonMeta):
                                 'value': not client.alarm_mode})
                 if response['success']:
                     client.alarm_mode = response['value']
+                    logging.info('Configuração do Sistema de Alarme da %s para %s', client.name, format_value(client.alarm_mode))
                 else:
-                    # self.last_errors.append(f'Erro ao acionar Sistema de Alarme da {client.name}')
-                    self.last_errors.append(str(response))
+                    logging.info('Erro ao tentar configurar o Sistema de Alarme da %s para %s', client.name, format_value(not client.alarm_mode))
         elif self.option_selected == 2:
             buzzer_name = 'Sirene do Alarme'
             for client in self.clients:
@@ -148,10 +151,10 @@ class Screen(metaclass=SingletonMeta):
                                 'value': not device.value})
                 if response['success']:
                     device.value = response['value']
+                    logging.info('Configuração do %s da %s para %s', device.name, client.name, format_value(device.value))
                 else:
-                    # self.last_errors.append(f'Erro ao acionar Sistema de Alarme da {client.name}')
-                    self.last_errors.append(str(response))
-        elif self.option_selected == 3:...
+                    logging.error('Erro ao tentar configurar %s da %s para %s', device.name, client.name, format_value(not device.value))
+        elif self.option_selected == 3:...  # TODO: Implement exit
         else:
             device = self.client.outputs[self.option_selected - len(self.options)]
             response = request(self.client.conn_info.ip, self.client.conn_info.port,
@@ -160,9 +163,9 @@ class Screen(metaclass=SingletonMeta):
                         'value': not device.value})
             if response['success']:
                 device.value = response['value']
+                logging.info('Configuração do %s para %s', device.name, format_value(device.value))
             else:
-                # self.last_errors.append(f'Erro ao acionar {device.name} da {self.client.name}')
-                self.last_errors.append(str(response))
+                logging.error('Erro ao tentar configurar %s para %s', device.name, format_value(not device.value))
 
     def render(self):
         self.stdscr.erase()
@@ -199,12 +202,17 @@ class Screen(metaclass=SingletonMeta):
         self.total_people_box.write(2, 2, format_value(sum(x.people or 0 for x in self.clients)), center=True)
         self.alarm_box.write(2, 2, format_value(self.client.alarm_mode), center=True)
 
-    def render_error_messages(self):
-        self.last_errors[:] = self.last_errors[-4:]
-        self.stdscr.attron(curses.color_pair(2))
-        for i, msg in enumerate(self.last_errors, 2):
+    def render_last_events(self):
+        events = self.last_events.getvalue().splitlines()[-4:]
+        for i, msg in enumerate(events, 2):
+            at = curses.color_pair(2) if 'erro' in msg.lower() else curses.color_pair(4)
+            self.stdscr.attron(at)
             self.trigger_alarm_box.write(i, 2, msg, center=True)
-        self.stdscr.attroff(curses.color_pair(2))
+            self.stdscr.attroff(at)
+
+        self.last_events.seek(0)
+        self.last_events.truncate(0)
+        self.last_events.write('\n'.join(events) + '\n')
 
     def render_menu(self):
         for i, option in enumerate(self.options, 1):
