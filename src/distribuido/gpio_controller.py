@@ -2,6 +2,8 @@ from typing import Dict, Optional
 import RPi.GPIO as gpio
 import adafruit_dht
 import board
+import time
+import threading
 
 from distribuido.config import Config
 from utils.singleton import SingletonMeta
@@ -37,10 +39,27 @@ class GPIOController(metaclass=SingletonMeta):
         gpio.add_event_detect(self.inputs['Sensor de Contagem de Pessoas Entrada'].pin, gpio.RISING, inc_people, bouncetime=50)
         gpio.add_event_detect(self.inputs['Sensor de Contagem de Pessoas Saída'].pin, gpio.RISING, dec_people, bouncetime=50)
 
+        threading.Thread(target=self.trun_on_ligths_daemon, daemon=True).start()
+
     def should_sound_buzzer(self) -> bool:
         if self.read_input('Sensor de Fumaça'):
             return True
         return self.alarm_mode and any(self.read_input(name) for name in ('Sensor de Presença', 'Sensor de Janela', 'Sensor de Porta'))
+
+    def trun_on_ligths_daemon(self):
+        while True:
+            time.sleep(0.01)
+
+            if not self.read_input('Sensor de Presença'):
+                continue
+
+            self.set_device('Lâmpada 01', True)
+            self.set_device('Lâmpada 02', True)
+
+            time.sleep(15)
+
+            self.set_device('Lâmpada 01', False)
+            self.set_device('Lâmpada 02', False)
 
     def read_all_inputs(self) -> Dict[str, bool]:
         return {
