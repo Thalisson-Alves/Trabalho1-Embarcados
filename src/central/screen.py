@@ -170,17 +170,27 @@ class Screen(metaclass=SingletonMeta):
                 logging.error('Tentativa de acionar todos os dispositivos da %s para %s', self.client.name, format_value(value))
                 self.log.error('%s %s %s', self.client.name, 'Aciona tudo', format_value(value))
         elif self.option_selected == 3:
+            value = not self.client.alarm_mode
+            if value:
+                for client in self.clients:
+                    response = request(client.conn_info.ip, client.conn_info.port,
+                                    {'type': ClientRequestType.CAN_SET_ALARM_MODE})
+                    if not response.get('value', True):
+                        logging.error('Não é possível acionar Sistema de Alarme nesse momento da %s para %s', client.name, format_value(value))
+                        self.log.error('%s %s', self.client.name, 'Não é possível acionar Sistema de Alarme nesse momento')
+                        return
+
             for client in self.clients:
                 response = request(client.conn_info.ip, client.conn_info.port,
                                 {'type': ClientRequestType.SET_ALARM_MODE,
-                                'value': not client.alarm_mode})
+                                'value': value})
                 if response['success']:
                     client.alarm_mode = response['value']
                     logging.info('Configuração do Sistema de Alarme da %s para %s', client.name, format_value(client.alarm_mode))
                     self.log.info('%s %s %s', client.name, 'Sistema de Alarme', format_value(client.alarm_mode))
                 else:
-                    logging.info('Erro ao tentar configurar o Sistema de Alarme da %s para %s', client.name, format_value(not client.alarm_mode))
-                    self.log.error('%s %s %s', client.name, 'Sistema de Alarme', format_value(not client.alarm_mode))
+                    logging.info('Erro ao tentar configurar o Sistema de Alarme da %s para %s', client.name, format_value(value))
+                    self.log.error('%s %s %s', client.name, 'Sistema de Alarme', format_value(value))
         elif self.option_selected == 4:
             buzzer_name = 'Sirene do Alarme'
             for client in self.clients:

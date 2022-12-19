@@ -21,7 +21,7 @@ def handle_requests(data: dict, addr: Tuple[str, int]) -> dict:
         for field in ('people', 'temperature', 'humidity', 'alarm_mode'):
             if data[field] is not None:
                 setattr(client, field, data[field])
-        logging.getLogger('screen').info('Atualização %s', client.name)
+        # logging.getLogger('screen').info('Atualização %s', client.name)
         logging.info('Atualização automátca da %s', client.name)
         return {'success': True, 'detail': 'Data updated'}
 

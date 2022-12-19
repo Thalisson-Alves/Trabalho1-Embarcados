@@ -41,10 +41,13 @@ class GPIOController(metaclass=SingletonMeta):
 
         threading.Thread(target=self.trun_on_ligths_daemon, daemon=True).start()
 
+    def can_set_alarm_mode(self) -> bool:
+        return not any(self.read_input(name) for name in ('Sensor de Presença', 'Sensor de Janela', 'Sensor de Porta'))
+
     def should_sound_buzzer(self) -> bool:
         if self.read_input('Sensor de Fumaça'):
             return True
-        return self.alarm_mode and any(self.read_input(name) for name in ('Sensor de Presença', 'Sensor de Janela', 'Sensor de Porta'))
+        return self.alarm_mode and not self.can_set_alarm_mode()
 
     def trun_on_ligths_daemon(self):
         while True:
