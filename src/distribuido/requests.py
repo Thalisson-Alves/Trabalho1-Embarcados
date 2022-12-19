@@ -29,6 +29,14 @@ def handle_requests(data: dict, addr: Tuple[str, int]) -> dict:
         }
         print(f'Send response [{response}]')
         return response
+    elif data['type'] == ClientRequestType.SET_ALL:
+        for device in controller.outputs:
+            controller.set_device(device, data['value'])
+        response = {
+            'success': True,
+            'outputs': controller.read_all_outputs()
+        }
+        return response
     else:
         print(f"Unknown request: [{data}]")
         return {'success': False, 'detail': 'Unknown request'}

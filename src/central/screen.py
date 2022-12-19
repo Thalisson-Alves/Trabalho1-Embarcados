@@ -91,6 +91,8 @@ class Screen(metaclass=SingletonMeta):
 
         self.options = [
             'Acionar dispositivo',
+            'Acionar todos os dispositivos',
+            'Desligar todos os dispositivos',
             'Acionar sistema de alarme',
             'Acionar alarme de incêndio',
             'Sair',
@@ -140,6 +142,34 @@ class Screen(metaclass=SingletonMeta):
         if self.option_selected == 0:
             self.option_selected = len(self.options)
         elif self.option_selected == 1:
+            value = True
+            response = request(self.client.conn_info.ip, self.client.conn_info.port,
+                        {'type': ClientRequestType.SET_ALL,
+                        'value': value})
+            if response['success']:
+                for device in self.client.outputs:
+                    device.value = value
+
+                logging.info('Acionamento de todos os dispositivos da %s para %s', self.client.name, format_value(value))
+                self.log.info('%s %s %s', self.client.name, 'Aciona tudo', format_value(value))
+            else:
+                logging.error('Tentativa de acionar todos os dispositivos da %s para %s', self.client.name, format_value(value))
+                self.log.error('%s %s %s', self.client.name, 'Aciona tudo', format_value(value))
+        elif self.option_selected == 2:
+            value = False
+            response = request(self.client.conn_info.ip, self.client.conn_info.port,
+                        {'type': ClientRequestType.SET_ALL,
+                        'value': value})
+            if response['success']:
+                for device in self.client.outputs:
+                    device.value = value
+
+                logging.info('Acionamento de todos os dispositivos da %s para %s', self.client.name, format_value(value))
+                self.log.info('%s %s %s', self.client.name, 'Aciona tudo', format_value(value))
+            else:
+                logging.error('Tentativa de acionar todos os dispositivos da %s para %s', self.client.name, format_value(value))
+                self.log.error('%s %s %s', self.client.name, 'Aciona tudo', format_value(value))
+        elif self.option_selected == 3:
             for client in self.clients:
                 response = request(client.conn_info.ip, client.conn_info.port,
                                 {'type': ClientRequestType.SET_ALARM_MODE,
@@ -151,7 +181,7 @@ class Screen(metaclass=SingletonMeta):
                 else:
                     logging.info('Erro ao tentar configurar o Sistema de Alarme da %s para %s', client.name, format_value(not client.alarm_mode))
                     self.log.error('%s %s %s', client.name, 'Sistema de Alarme', format_value(not client.alarm_mode))
-        elif self.option_selected == 2:
+        elif self.option_selected == 4:
             buzzer_name = 'Sirene do Alarme'
             for client in self.clients:
                 device = client.find_output_by_name(buzzer_name)
@@ -166,7 +196,7 @@ class Screen(metaclass=SingletonMeta):
                 else:
                     logging.error('Erro ao tentar configurar %s da %s para %s', device.name, client.name, format_value(not device.value))
                     self.log.error('%s %s %s', client.name, device.name, format_value(not device.value))
-        elif self.option_selected == 3:
+        elif self.option_selected == 5:
             logging.info('Saindo do sistema')
             exit(0)
         else:
@@ -235,11 +265,11 @@ class Screen(metaclass=SingletonMeta):
     def render_menu(self):
         for i, option in enumerate(self.options, 1):
             if i - 1 == self.option_selected:
-                self.menu_box.write(i + 1, 2, '>')
+                self.menu_box.write(i, 2, '>')
                 self.stdscr.attron(curses.color_pair(3))
 
             option = f'{i}. {option}'
-            self.menu_box.write(i + 1, 4, option.ljust(self.menu_box.w - 5))
+            self.menu_box.write(i, 4, option.ljust(self.menu_box.w - 5))
 
             if i - 1 == self.option_selected:
                 self.stdscr.attroff(curses.color_pair(3))
