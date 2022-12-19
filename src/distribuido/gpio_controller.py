@@ -37,6 +37,11 @@ class GPIOController(metaclass=SingletonMeta):
         gpio.add_event_detect(self.inputs['Sensor de Contagem de Pessoas Entrada'].pin, gpio.RISING, inc_people, bouncetime=50)
         gpio.add_event_detect(self.inputs['Sensor de Contagem de Pessoas Saída'].pin, gpio.RISING, dec_people, bouncetime=50)
 
+    def should_sound_buzzer(self) -> bool:
+        if self.read_input('Sensor de Fumaça'):
+            return True
+        return self.alarm_mode and any(self.read_input(name) for name in ('Sensor de Presença', 'Sensor de Janela', 'Sensor de Porta'))
+
     def read_all_inputs(self) -> Dict[str, bool]:
         return {
             name: self.read_input(name)
