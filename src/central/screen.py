@@ -137,6 +137,8 @@ class Screen(metaclass=SingletonMeta):
             self.room_selected = (self.room_selected + 1) % len(self.clients)
         elif user_input == curses.KEY_BTAB:
             self.room_selected = (self.room_selected - 1) % len(self.clients)
+        elif user_input == curses.KEY_RESIZE:
+            self.initialize_boxes()
 
     def apply_action(self):
         if self.option_selected == 0:
