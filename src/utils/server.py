@@ -1,7 +1,5 @@
 import socket
 import json
-import time
-import logging
 from typing import NoReturn, Callable, Tuple
 
 BUFFER_SIZE = 1024

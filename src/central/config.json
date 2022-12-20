@@ -1,4 +1,7 @@
 {
+    "ip": "0.0.0.0",
+    "port": 10921,
+    "log_file": "/tmp/central-log.csv",
     "rooms": [
         {
             "name": "Sala 01",

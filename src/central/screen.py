@@ -1,9 +1,8 @@
 import curses
-from curses.textpad import rectangle
-import time
-from typing import List, Tuple
-import logging
 import io
+import logging
+from curses.textpad import rectangle
+from typing import Tuple
 
 from central.client_state import ClientState, ClientStates
 from utils.interface import ClientRequestType
