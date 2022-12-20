@@ -15,7 +15,7 @@ def run(host: str, port: int, handle_request: Callable[[dict, Tuple[str, int]], 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind((host, port))
-        sock.listen()
+        sock.listen(socket.INADDR_ANY)
 
         while True:
             conn, addr = sock.accept()

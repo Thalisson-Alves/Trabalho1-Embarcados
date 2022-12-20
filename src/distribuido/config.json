@@ -1,7 +1,7 @@
 {
     "ip_servidor_central": "127.0.0.1",
     "porta_servidor_central": 10921,
-    "ip_servidor_distribuido": "127.0.0.1",
+    "ip_servidor_distribuido": "0.0.0.0",
     "porta_servidor_distribuido": 10922,
     "nome": "Sala 02",
     "outputs": [

@@ -7,6 +7,7 @@ from central.requests import handle_requests
 from central.screen import Screen
 from utils import server
 
+# TODO: pass this env to config.json
 HOST = os.getenv('HOST', '127.0.0.1')
 PORT = int(os.getenv('PORT', '10921'))
 LOG_FILE = os.getenv('LOG_FILE', '/tmp/central-log.csv')
