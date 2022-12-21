@@ -27,6 +27,11 @@ def main():
         curses.wrapper(Screen().run)
     except (SystemExit, KeyboardInterrupt):
         ...
+    except curses.error:
+        msg = 'Aumente o tamanho do terminal para usar o Servidor Central!!'
+        print('*' * len(msg))
+        print(msg)
+        print('*' * len(msg))
     except:
         import traceback
         traceback.print_exc()
