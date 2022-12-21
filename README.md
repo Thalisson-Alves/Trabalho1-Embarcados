@@ -81,3 +81,6 @@ Como podemos ver nas figuras acima, a interface apresenta algumas informações 
 - Dispositivos de Entrada: Estado de todos os sensores de entrada presentes na _GPIO_.
 - Dispositivos de Saída: Estado de todos os sensores de saída presentes na _GPIO_.
 
+### Navegação
+
+Para navegar nos menus é possível utilizar as setinhas do teclado, ou as teclas `j` e `k` para navegar para baixo e para cima respectivamente. Para executar a ação que está selecionada aperte a tecla `Enter`. Para voltar para a primeira opção do _Menu_, seja da aba _Dispositivos de Saída_ ou do próprio _Menu_ aperte `Backspace`. A navegação entre salas é realizada através das teclas `Tab` e `Shift + Tab` para ir para a próxima sala e para a anterior respectivamente. Para sair do programa basta selecionar a opção _Sair_ ou apertar `Ctrl + c`.
