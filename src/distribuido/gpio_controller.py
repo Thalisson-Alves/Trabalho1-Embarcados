@@ -34,7 +34,7 @@ class GPIOController(metaclass=SingletonMeta):
         self.alarm_mode = False
 
         def inc_people(_): self.people += 1
-        def dec_people(_): self.people -= 1
+        def dec_people(_): self.people = max(self.people - 1, 0)
 
         gpio.add_event_detect(self.inputs['Sensor de Contagem de Pessoas Entrada'].pin, gpio.RISING, inc_people, bouncetime=50)
         gpio.add_event_detect(self.inputs['Sensor de Contagem de Pessoas Saída'].pin, gpio.RISING, dec_people, bouncetime=50)
