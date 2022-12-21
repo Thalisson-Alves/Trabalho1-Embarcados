@@ -63,6 +63,7 @@ class Screen(metaclass=SingletonMeta):
         self.stdscr = stdscr
         self.stdscr.keypad(True)
         self.stdscr.nodelay(True)
+        curses.curs_set(0)
         self.room_selected = self.option_selected = 0
 
         self.initialize_boxes()
