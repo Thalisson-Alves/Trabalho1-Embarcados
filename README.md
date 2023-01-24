@@ -2,7 +2,7 @@
 
 ## Especificação
 
-Automação predial ...
+A especificação do trabalho pode ser encontrada [aqui](https://gitlab.com/fse_fga/trabalhos-2022_2/trabalho-1-2022-2).
 
 ## Instalação
 
